@@ -1,7 +1,7 @@
 # Astrolabe Python SDK — Architecture
 
 Status: DRAFT / foundation document
-Upstream: https://github.com/photon-hq/Astrolabe (Swift, v0.4.0, macOS 15+, Swift 6.2+)
+Upstream: <https://github.com/photon-hq/Astrolabe> (Swift, v0.4.0, macOS 15+, Swift 6.2+)
 Audience: implementation agents working across independent sessions. Each parent task below is designed to be completable in isolation given this document and the upstream repo.
 
 ---
@@ -38,7 +38,7 @@ The Python SDK is strictly a **binding layer**:
 
 ## 2. System overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ launchd (root)                                              │
 │   └── AstrolabePyHost (Swift binary, LaunchDaemon)          │
@@ -73,7 +73,7 @@ The upstream engine never knows Python exists. All integration is through public
 
 Monorepo, two toolchains:
 
-```
+```text
 astrolabe-py/
 ├── protocol/
 │   ├── schema/                  # JSON Schema files, versioned (v1/)
@@ -141,7 +141,7 @@ Python responds with its `protocol_version` and `sdk_version`. On mismatch of `p
 ### 4.3 Methods — Swift → Python
 
 | Method | Params | Result | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `evaluate` | `env: {key: value}`, `tick_id: int` | `TreeSpec` | Timeout 5s default (configurable). Timeout → engine keeps previous tree, logs. |
 | `invoke` | `token: str`, `kind: enum`, `args: object`, `deadline_ms: int` | `{"ok": true, "value": any}` or structured error | Executes a registered callback. `kind` ∈ mount, check, unmount, pre_install, post_install, pre_uninstall, task, on_change, on_start, on_exit, dialog_button, pre_update, post_update, on_fail. |
 | `storage_changed` | `key`, `value` | ack | Push notification when Swift-side `@Storage` changes (e.g. via AstrolabeUtils from another process). |
@@ -150,7 +150,7 @@ Python responds with its `protocol_version` and `sdk_version`. On mismatch of `p
 ### 4.4 Methods — Python → Swift
 
 | Method | Params | Result | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `configure` | see §8.1 | ack | Once, post-handshake, pre-first-evaluate. |
 | `state_changed` | `{}` | ack | Signals a `@State` mutation occurred inside a callback; Swift schedules the next tick (mirrors upstream StateNotifier). |
 | `storage_read` | `key`, `type_hint` | `value \| null` | Reads Swift persistence (single source of truth; interops with AstrolabeUtils). |
@@ -193,7 +193,7 @@ A `2xx` during `evaluate` must map to "keep previous tree + surface error via ho
 ### 5.2 Node types (v1 surface — mirrors upstream table)
 
 | type | payload fields | callbacks |
-|---|---|---|
+| --- | --- | --- |
 | `brew` | `name`, `pkg_type` (formula/cask) | hooks only |
 | `pkg` | `source` (catalog / github{repo, version{kind, value}} / custom), `allow_untrusted` | hooks only |
 | `sys` | `setting` (tagged union, e.g. `{kind: "hostname", value: "dev-mac"}`) | — |
@@ -355,7 +355,9 @@ Consequence: launchd runs the Swift host; the host reads the manifest and spawns
 Each parent task lists child tasks with acceptance criteria (AC). Order respects dependencies; P1/P2 can proceed in parallel after P0.
 
 ### P0 — Protocol foundation
+
 Deliverable: `protocol/` complete and CI-validated.
+
 - **P0.1** Write `PROTOCOL.md`: framing, handshake, method tables (§4), error codes.
   AC: every method in §4 documented with request/response examples; version bump procedure defined.
 - **P0.2** Author `treespec.schema.json` + `rpc.schema.json` covering §5 in full.
@@ -364,7 +366,9 @@ Deliverable: `protocol/` complete and CI-validated.
   AC: normative canonical-JSON rules; per-node-type identity field list cross-referenced to upstream source lines/commit.
 
 ### P1 — Swift host shim
+
 Depends: P0.
+
 - **P1.1** SPM package depending on upstream Astrolabe; `@main` skeleton, socket server, framing codec, handshake.
   AC: handshake round-trip test; version mismatch exits non-zero.
 - **P1.2** `TreeSpecInterpreter` for pure-data nodes (`brew`, `pkg`, `sys`, `jamf`, `launch_*`, `group`, `anchor`) + config modifiers.
@@ -377,7 +381,9 @@ Depends: P0.
   AC: kill-child test recovers within backoff budget; evaluate timeout leaves prior tree mounted.
 
 ### P2 — Python SDK core (authoring)
+
 Depends: P0. No runtime/RPC needed.
+
 - **P2.1** Declaration dataclasses + payload serialization for all §5.2 types.
   AC: round-trip serialize → schema-validate for every type; frozen/immutable verified.
 - **P2.2** Modifier system: chaining returns new values; ordered serialization; group propagation left to Swift (only serialized on the group node).
@@ -388,7 +394,9 @@ Depends: P0. No runtime/RPC needed.
   AC: identical `body` output twice yields identical TreeSpec except token generation counter.
 
 ### P3 — Python runtime host
+
 Depends: P0, P2.
+
 - **P3.1** asyncio RPC layer (framing, bidirectional requests, deadlines).
   AC: fuzz tests from §10 pass; concurrent in-flight invokes resolve correctly.
 - **P3.2** `evaluate` handler: contextvar snapshot, generator evaluation, error `2xx` with traceback.
@@ -399,7 +407,9 @@ Depends: P0, P2.
   AC: `python mysetup.py --astrolabe-host` serves; without flag, install flow (P5) invoked.
 
 ### P4 — State system
+
 Depends: P3, P1.4.
+
 - **P4.1** `Environment` descriptor bound to evaluation/callback context.
   AC: read outside context raises; conditional-body conformance fixture (enrollment example) passes.
 - **P4.2** `State` descriptor + `state_changed` notification; document restart semantics.
@@ -408,7 +418,9 @@ Depends: P3, P1.4.
   AC: value written from Python readable via upstream AstrolabeUtils on the same machine (interop test), and vice versa via `storage_changed`.
 
 ### P5 — Packaging, install flow, CLI
+
 Depends: P1, P3.
+
 - **P5.1** Wheel build embedding per-arch host binary; uv-based build in CI.
   AC: `uv add astrolabe-sdk` on arm64 and x86_64 macOS yields a runnable host binary; binary codesigned (see OQ-2).
 - **P5.2** Install manifest + daemon install/uninstall/force passthrough (§9).
@@ -419,7 +431,9 @@ Depends: P1, P3.
   AC: configure payload conformance fixture; hooks invoked in a mocked update cycle.
 
 ### P6 — Conformance suite and hardening
+
 Depends: all above; ongoing.
+
 - **P6.1** Port all four upstream `Examples/` to Python with golden fixtures.
 - **P6.2** Failure-mode matrix tests: python crash mid-mount, evaluate timeout, protocol desync, manifest drift.
 - **P6.3** Docs: README, API reference (mkdocs), migration table Swift API → Python API (must cover 100% of the upstream README surface or link a §12 entry).
@@ -432,7 +446,7 @@ Depends: all above; ongoing.
 Intentional departures from a literal binding. Additions require justification and a conformance note.
 
 | ID | Deviation | Justification |
-|---|---|---|
+| --- | --- | --- |
 | D-1 | `body()` is a generator, not a result builder | No Python equivalent; observationally identical tree. |
 | D-2 | `with group(...)` context manager sugar | Ergonomics; serializes to the same `group` node. |
 | D-3 | `@State` lost on Python-process restart (not only daemon restart) | Process boundary; documented. |
@@ -445,4 +459,3 @@ Intentional departures from a literal binding. Additions require justification a
 - **OQ-3 (P5.3):** is there a supported read path for `AstrolabeState.payloads()` from another process, or is payload state private to the daemon (only `@Storage` exposed via AstrolabeUtils)? Determines whether Python `status`-style commands can show installed payloads.
 - **OQ-4 (P1.3):** dialog `isPresented` binding bridge design — named-state-key approach vs dedicated `state_write` invoke kind.
 - **OQ-5:** custom `StateProvider` support from Python (poll a Python coroutine as an environment source). Proposed: out of scope for v1; revisit after P4.
-
