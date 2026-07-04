@@ -1,0 +1,497 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astrolabe-py/protocol/schema/treespec.schema.json",
+  "title": "AstrolabeTreeSpec",
+  "description": "Serialized declaration tree produced by the Python host and consumed by the Swift shim. Version 1.",
+  "type": "object",
+  "required": ["version", "root"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version. Must be 1 for v1 protocol."
+    },
+    "root": {
+      "$ref": "#/$defs/node",
+      "description": "Top-level node; typically a group whose children are the declarations yielded by body()."
+    }
+  },
+  "$defs": {
+    "callbackToken": {
+      "type": "string",
+      "pattern": "^cb:[0-9]+$",
+      "description": "Opaque token referencing a callable in the Python host's callback registry. Excluded from identity input (INV-4)."
+    },
+    "modifierList": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/modifier"},
+      "description": "Ordered list of modifiers. Order is significant and must match Swift application order."
+    },
+    "modifier": {
+      "oneOf": [
+        {"$ref": "#/$defs/modLoopInterval"},
+        {"$ref": "#/$defs/modAllowUntrusted"},
+        {"$ref": "#/$defs/modEnvironment"},
+        {"$ref": "#/$defs/modRunAtLoad"},
+        {"$ref": "#/$defs/modKeepAlive"},
+        {"$ref": "#/$defs/modActivate"},
+        {"$ref": "#/$defs/modStandardOutPath"},
+        {"$ref": "#/$defs/modEnvironmentVariables"},
+        {"$ref": "#/$defs/modPriority"},
+        {"$ref": "#/$defs/modPreInstall"},
+        {"$ref": "#/$defs/modPostInstall"},
+        {"$ref": "#/$defs/modPreUninstall"},
+        {"$ref": "#/$defs/modTask"},
+        {"$ref": "#/$defs/modOnChange"},
+        {"$ref": "#/$defs/modDialog"},
+        {"$ref": "#/$defs/modPreUpdate"},
+        {"$ref": "#/$defs/modPostUpdate"},
+        {"$ref": "#/$defs/modOnFail"}
+      ]
+    },
+    "modLoopInterval": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "loop_interval"},
+        "value": {"type": "number", "exclusiveMinimum": 0, "description": "Poll interval in seconds."}
+      }
+    },
+    "modAllowUntrusted": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "allow_untrusted"}
+      }
+    },
+    "modEnvironment": {
+      "type": "object",
+      "required": ["kind", "keypath", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "environment"},
+        "keypath": {"type": "string", "description": "Environment key path as exposed by the Swift engine."},
+        "value": {"type": "string"}
+      }
+    },
+    "modRunAtLoad": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "run_at_load"}
+      }
+    },
+    "modKeepAlive": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "keep_alive"}
+      }
+    },
+    "modActivate": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "activate"}
+      }
+    },
+    "modStandardOutPath": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "standard_out_path"},
+        "value": {"type": "string", "description": "Filesystem path for stdout capture."}
+      }
+    },
+    "modEnvironmentVariables": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "environment_variables"},
+        "value": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Key-value pairs injected into the launchd job environment."
+        }
+      }
+    },
+    "modPriority": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "priority"},
+        "value": {"type": "string", "enum": ["high", "low"]}
+      }
+    },
+    "modPreInstall": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "pre_install"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modPostInstall": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "post_install"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modPreUninstall": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "pre_uninstall"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modTask": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "task"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modOnChange": {
+      "type": "object",
+      "required": ["kind", "keypath", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "on_change"},
+        "keypath": {"type": "string", "description": "Observed environment keypath; fires when this value changes."},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modDialog": {
+      "type": "object",
+      "required": ["kind", "text", "buttons", "state_key"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "dialog"},
+        "text": {"type": "string"},
+        "buttons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["label", "token"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {"type": "string"},
+              "token": {"$ref": "#/$defs/callbackToken"}
+            }
+          }
+        },
+        "state_key": {
+          "type": "string",
+          "description": "Named @State key that tracks dialog presentation. Dismissal is signalled via on_change invoke against this key (v1 design, OQ-4)."
+        }
+      }
+    },
+    "modPreUpdate": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "pre_update"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modPostUpdate": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "post_update"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "modOnFail": {
+      "type": "object",
+      "required": ["kind", "token"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "on_fail"},
+        "token": {"$ref": "#/$defs/callbackToken"}
+      }
+    },
+    "pkgVersionLatest": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "latest"}
+      }
+    },
+    "pkgVersionTag": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "tag"},
+        "value": {"type": "string", "description": "Exact git tag, e.g. 'v1.2.3'."}
+      }
+    },
+    "pkgVersion": {
+      "oneOf": [
+        {"$ref": "#/$defs/pkgVersionLatest"},
+        {"$ref": "#/$defs/pkgVersionTag"}
+      ]
+    },
+    "pkgSourceCatalog": {
+      "type": "object",
+      "required": ["kind", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "catalog"},
+        "id": {"type": "string", "description": "Well-known catalog identifier, e.g. 'homebrew', 'command_line_tools'."}
+      }
+    },
+    "pkgSourceGitHub": {
+      "type": "object",
+      "required": ["kind", "repo", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "github"},
+        "repo": {"type": "string", "pattern": "^[^/]+/[^/]+$", "description": "GitHub repository in 'org/repo' form."},
+        "version": {"$ref": "#/$defs/pkgVersion"}
+      }
+    },
+    "pkgSourceCustom": {
+      "type": "object",
+      "required": ["kind", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "custom"},
+        "url": {"type": "string", "format": "uri"}
+      }
+    },
+    "pkgSource": {
+      "oneOf": [
+        {"$ref": "#/$defs/pkgSourceCatalog"},
+        {"$ref": "#/$defs/pkgSourceGitHub"},
+        {"$ref": "#/$defs/pkgSourceCustom"}
+      ]
+    },
+    "sysSetting": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"type": "string"},
+        "value": {}
+      },
+      "description": "Tagged-union system setting. 'kind' identifies the setting type; 'value' is setting-specific. Known kinds include 'hostname'. Extensible: unknown kinds are passed through to Swift."
+    },
+    "jamfSetting": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"type": "string"},
+        "value": {}
+      },
+      "description": "Tagged-union Jamf setting. Known kinds include 'computerName'. Extensible: unknown kinds are passed through to Swift."
+    },
+    "customizedCallbacks": {
+      "type": "object",
+      "required": ["mount", "check"],
+      "additionalProperties": false,
+      "properties": {
+        "mount": {"$ref": "#/$defs/callbackToken"},
+        "check": {"$ref": "#/$defs/callbackToken"},
+        "unmount": {"$ref": "#/$defs/callbackToken"}
+      },
+      "description": "Callbacks for a customized node. unmount is optional; mount and check are required."
+    },
+    "brewNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "brew"},
+        "payload": {
+          "type": "object",
+          "required": ["name", "pkg_type"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {"type": "string", "minLength": 1, "description": "Homebrew formula or cask name."},
+            "pkg_type": {"type": "string", "enum": ["formula", "cask"]}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "pkgNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "pkg"},
+        "payload": {
+          "type": "object",
+          "required": ["source"],
+          "additionalProperties": false,
+          "properties": {
+            "source": {"$ref": "#/$defs/pkgSource"},
+            "allow_untrusted": {"type": "boolean", "default": false}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "sysNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "sys"},
+        "payload": {
+          "type": "object",
+          "required": ["setting"],
+          "additionalProperties": false,
+          "properties": {
+            "setting": {"$ref": "#/$defs/sysSetting"}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "jamfNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "jamf"},
+        "payload": {
+          "type": "object",
+          "required": ["setting"],
+          "additionalProperties": false,
+          "properties": {
+            "setting": {"$ref": "#/$defs/jamfSetting"}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "launchDaemonNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "launch_daemon"},
+        "payload": {
+          "type": "object",
+          "required": ["label", "program"],
+          "additionalProperties": false,
+          "properties": {
+            "label": {"type": "string", "minLength": 1, "description": "Launchd label, e.g. 'com.example.daemon'."},
+            "program": {"type": "string", "minLength": 1, "description": "Absolute path to the daemon executable."}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "launchAgentNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "launch_agent"},
+        "payload": {
+          "type": "object",
+          "required": ["label", "program"],
+          "additionalProperties": false,
+          "properties": {
+            "label": {"type": "string", "minLength": 1, "description": "Launchd label, e.g. 'com.example.agent'."},
+            "program": {"type": "string", "minLength": 1, "description": "Absolute path to the agent executable."}
+          }
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "customizedNode": {
+      "type": "object",
+      "required": ["type", "payload", "callbacks", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "customized"},
+        "payload": {
+          "type": "object",
+          "required": ["id"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {"type": "string", "minLength": 1, "description": "Stable user-assigned identifier. Used as the sole identity input for this node type."}
+          }
+        },
+        "callbacks": {"$ref": "#/$defs/customizedCallbacks"},
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "anchorNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "anchor"},
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Anchor carries no payload; all configuration is via modifiers (e.g. on_change)."
+        },
+        "modifiers": {"$ref": "#/$defs/modifierList"}
+      }
+    },
+    "groupNode": {
+      "type": "object",
+      "required": ["type", "payload", "modifiers"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "group"},
+        "payload": {
+          "type": "object",
+          "required": ["children"],
+          "additionalProperties": false,
+          "properties": {
+            "children": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/node"},
+              "description": "Child nodes. Conditionals and loops in body() are resolved before serialization; the spec contains only concrete leaves."
+            }
+          }
+        },
+        "modifiers": {
+          "$ref": "#/$defs/modifierList",
+          "description": "Group-level modifiers. Propagation to children is performed Swift-side by the TreeSpecInterpreter, never pre-flattened in Python (INV-1)."
+        }
+      }
+    },
+    "node": {
+      "oneOf": [
+        {"$ref": "#/$defs/brewNode"},
+        {"$ref": "#/$defs/pkgNode"},
+        {"$ref": "#/$defs/sysNode"},
+        {"$ref": "#/$defs/jamfNode"},
+        {"$ref": "#/$defs/launchDaemonNode"},
+        {"$ref": "#/$defs/launchAgentNode"},
+        {"$ref": "#/$defs/customizedNode"},
+        {"$ref": "#/$defs/anchorNode"},
+        {"$ref": "#/$defs/groupNode"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "root": {
+    "type": "group",
+    "payload": {
+      "children": [
+        {
+          "type": "pkg",
+          "payload": {"source": {"kind": "catalog", "id": "command_line_tools"}},
+          "modifiers": []
+        },
+        {
+          "type": "pkg",
+          "payload": {"source": {"kind": "catalog", "id": "homebrew"}},
+          "modifiers": []
+        },
+        {
+          "type": "brew",
+          "payload": {"name": "wget", "pkg_type": "formula"},
+          "modifiers": []
+        },
+        {
+          "type": "brew",
+          "payload": {"name": "git-lfs", "pkg_type": "formula"},
+          "modifiers": []
+        },
+        {
+          "type": "brew",
+          "payload": {"name": "firefox", "pkg_type": "cask"},
+          "modifiers": []
+        },
+        {
+          "type": "pkg",
+          "payload": {
+            "source": {
+              "kind": "github",
+              "repo": "org/internal-tool",
+              "version": {"kind": "latest"}
+            }
+          },
+          "modifiers": []
+        },
+        {
+          "type": "launch_agent",
+          "payload": {
+            "label": "com.example.myagent",
+            "program": "/usr/local/bin/myagent"
+          },
+          "modifiers": [
+            {"kind": "run_at_load"},
+            {"kind": "keep_alive"},
+            {"kind": "activate"}
+          ]
+        }
+      ]
+    },
+    "modifiers": []
+  }
+}

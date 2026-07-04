@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "root": {
+    "type": "group",
+    "payload": {
+      "children": [
+        {
+          "type": "brew",
+          "payload": {"name": "wget", "pkg_type": "formula"},
+          "modifiers": []
+        }
+      ]
+    },
+    "modifiers": [
+      {"kind": "environment", "keypath": "gitHubToken", "value": "ghp_example"}
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3.0"
+
+set: ['e', 'u', 'pipefail']
+shopt: ['globstar']
+
+dotenv: ['.env']
+
+env:
+  VENV_DIR: "{{.ROOT_DIR}}/.venv"
+  PATH: "{{.VENV_DIR}}/bin:{{.PATH}}"
+
+vars:
+  PYTHON: uv run python
+
+includes:
+  uv:
+    taskfile: ./taskfiles/uv.yml
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  schema:validate:
+    desc: Validate all conformance fixtures against the protocol schemas
+    cmds:
+      - "{{.PYTHON}} scripts/validate_schemas.py"
+
+  test:
+    desc: Run the full test suite
+    cmds:
+      - uv run pytest tests/ -v
+
+  test:unit:
+    desc: Run unit tests only
+    cmds:
+      - uv run pytest tests/ -v -m unit
+
+  test:conformance:
+    desc: Run schema conformance tests
+    cmds:
+      - uv run pytest tests/python/test_schema_conformance.py -v
+
+  lint:
+    desc: Check formatting with ruff
+    cmds:
+      - uv run ruff format --check --diff .
+      - uv run ruff check .
+
+  lint:fix:
+    desc: Apply ruff formatting
+    cmds:
+      - uv run ruff format .
+      - uv run ruff check --fix .
+
+  markdownlint:
+    desc: Lint all Markdown files
+    cmds:
+      - markdownlint -c .markdownlint.jsonc .
+
+  ci:
+    desc: Run all checks (lint + validate + tests)
+    deps:
+      - lint
+      - schema:validate
+      - test:unit

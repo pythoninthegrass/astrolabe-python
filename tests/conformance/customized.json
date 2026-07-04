@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "root": {
+    "type": "customized",
+    "payload": {
+      "id": "disable-spotlight"
+    },
+    "callbacks": {
+      "mount": "cb:1",
+      "check": "cb:2",
+      "unmount": "cb:3"
+    },
+    "modifiers": []
+  }
+}

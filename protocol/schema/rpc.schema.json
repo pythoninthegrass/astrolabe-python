@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://astrolabe-py/protocol/schema/rpc.schema.json",
+  "title": "AstrolabeRPC",
+  "description": "JSON-RPC 2.0 messages exchanged between the Swift host shim and the Python runtime. Both sides may originate requests. See PROTOCOL.md §4 for the full specification.",
+  "oneOf": [
+    {"$ref": "#/$defs/request"},
+    {"$ref": "#/$defs/successResponse"},
+    {"$ref": "#/$defs/errorResponse"}
+  ],
+  "$defs": {
+    "jsonrpcVersion": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "requestId": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Per-direction monotonically increasing request identifier."
+    },
+    "ackResult": {
+      "type": "object",
+      "required": ["ok"],
+      "additionalProperties": false,
+      "properties": {
+        "ok": {"type": "boolean", "const": true}
+      }
+    },
+    "errorObject": {
+      "type": "object",
+      "required": ["code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Error code. Ranges: 1xx=protocol, 2xx=evaluation, 3xx=callback, 4xx=storage."
+        },
+        "message": {"type": "string"},
+        "data": {
+          "description": "Optional structured error payload. For 2xx errors includes 'traceback' string."
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "method", "params"],
+      "additionalProperties": false,
+      "properties": {
+        "jsonrpc": {"$ref": "#/$defs/jsonrpcVersion"},
+        "id": {"$ref": "#/$defs/requestId"},
+        "method": {"type": "string"},
+        "params": {"type": "object"}
+      }
+    },
+    "successResponse": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "result"],
+      "additionalProperties": false,
+      "properties": {
+        "jsonrpc": {"$ref": "#/$defs/jsonrpcVersion"},
+        "id": {"$ref": "#/$defs/requestId"},
+        "result": {}
+      }
+    },
+    "errorResponse": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "jsonrpc": {"$ref": "#/$defs/jsonrpcVersion"},
+        "id": {
+          "oneOf": [
+            {"$ref": "#/$defs/requestId"},
+            {"type": "null"}
+          ]
+        },
+        "error": {"$ref": "#/$defs/errorObject"}
+      }
+    },
+    "helloParams": {
+      "type": "object",
+      "required": ["protocol_version", "host_version", "upstream_version", "capabilities"],
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {"type": "integer", "minimum": 1},
+        "host_version": {"type": "string"},
+        "upstream_version": {"type": "string"},
+        "capabilities": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Optional feature flags advertised by the Swift host, e.g. ['telemetry', 'self_update']."
+        }
+      }
+    },
+    "helloResult": {
+      "type": "object",
+      "required": ["protocol_version", "sdk_version"],
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {"type": "integer", "minimum": 1},
+        "sdk_version": {"type": "string"}
+      }
+    },
+    "evaluateParams": {
+      "type": "object",
+      "required": ["env", "tick_id"],
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Environment snapshot: keypath → string-encoded value."
+        },
+        "tick_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonically increasing tick counter from the Swift engine."
+        }
+      }
+    },
+    "invokeKind": {
+      "type": "string",
+      "enum": [
+        "mount",
+        "check",
+        "unmount",
+        "pre_install",
+        "post_install",
+        "pre_uninstall",
+        "task",
+        "on_change",
+        "on_start",
+        "on_exit",
+        "dialog_button",
+        "pre_update",
+        "post_update",
+        "on_fail"
+      ]
+    },
+    "invokeParams": {
+      "type": "object",
+      "required": ["token", "kind", "args", "deadline_ms"],
+      "additionalProperties": false,
+      "properties": {
+        "token": {
+          "type": "string",
+          "pattern": "^cb:[0-9]+$",
+          "description": "Callback token from the Python host's registry."
+        },
+        "kind": {"$ref": "#/$defs/invokeKind"},
+        "args": {
+          "type": "object",
+          "description": "Kind-specific arguments. Shape depends on kind; see PROTOCOL.md §4.3."
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Absolute deadline in milliseconds from epoch; Python raises asyncio.TimeoutError if exceeded."
+        }
+      }
+    },
+    "invokeResult": {
+      "type": "object",
+      "required": ["ok"],
+      "additionalProperties": false,
+      "properties": {
+        "ok": {"type": "boolean", "const": true},
+        "value": {
+          "description": "Return value of the callback, if any. JSON-serializable (Codable analog)."
+        }
+      }
+    },
+    "storageChangedParams": {
+      "type": "object",
+      "required": ["key", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {"type": "string"},
+        "value": {
+          "description": "New storage value. JSON-serializable."
+        }
+      }
+    },
+    "shutdownParams": {
+      "type": "object",
+      "required": ["reason"],
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Human-readable reason string, e.g. 'SIGTERM', 'restart', 'update'."
+        }
+      }
+    },
+    "updateConfiguration": {
+      "type": "object",
+      "required": ["source"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "object",
+          "required": ["kind", "repo"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {"const": "github"},
+            "repo": {"type": "string", "pattern": "^[^/]+/[^/]+$"}
+          }
+        },
+        "interval_hours": {"type": "number", "exclusiveMinimum": 0},
+        "pre_update_token": {"type": "string", "pattern": "^cb:[0-9]+$"},
+        "post_update_token": {"type": "string", "pattern": "^cb:[0-9]+$"},
+        "on_fail_token": {"type": "string", "pattern": "^cb:[0-9]+$"}
+      }
+    },
+    "telemetryConfiguration": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"type": "string", "description": "Telemetry backend kind, e.g. 'signoz'."},
+        "endpoint": {"type": "string", "format": "uri"}
+      }
+    },
+    "commandDescriptor": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "description": "Subcommand name as registered with argparse."},
+        "help": {"type": "string"}
+      }
+    },
+    "configureParams": {
+      "type": "object",
+      "required": ["poll_interval", "daemon_mode", "version", "commands"],
+      "additionalProperties": false,
+      "properties": {
+        "poll_interval": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Tick interval in seconds."
+        },
+        "daemon_mode": {"type": "boolean"},
+        "version": {"type": "string", "description": "User script version string."},
+        "update": {
+          "oneOf": [
+            {"$ref": "#/$defs/updateConfiguration"},
+            {"type": "null"}
+          ]
+        },
+        "telemetry": {
+          "oneOf": [
+            {"$ref": "#/$defs/telemetryConfiguration"},
+            {"type": "null"}
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/commandDescriptor"}
+        },
+        "on_start_token": {
+          "oneOf": [
+            {"type": "string", "pattern": "^cb:[0-9]+$"},
+            {"type": "null"}
+          ]
+        },
+        "on_exit_token": {
+          "oneOf": [
+            {"type": "string", "pattern": "^cb:[0-9]+$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "storageReadParams": {
+      "type": "object",
+      "required": ["key"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {"type": "string"},
+        "type_hint": {
+          "type": "string",
+          "enum": ["boolean", "integer", "number", "string", "object", "array"],
+          "description": "Optional JSON type hint to aid Swift-side deserialization."
+        }
+      }
+    },
+    "storageReadResult": {
+      "type": "object",
+      "required": ["value"],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "description": "Storage value, or null if the key does not exist."
+        }
+      }
+    },
+    "storageWriteParams": {
+      "type": "object",
+      "required": ["key", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {"type": "string"},
+        "value": {
+          "description": "Value to persist. Must be JSON-serializable (Codable analog). Triggers a Swift tick."
+        }
+      }
+    },
+    "logParams": {
+      "type": "object",
+      "required": ["level", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["debug", "info", "warning", "error", "critical"]
+        },
+        "message": {"type": "string"},
+        "fields": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Structured key-value pairs for telemetry."
+        }
+      }
+    }
+  }
+}

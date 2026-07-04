@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "root": {
+    "type": "customized",
+    "payload": {
+      "id": "configure-defaults"
+    },
+    "callbacks": {
+      "mount": "cb:1",
+      "check": "cb:2"
+    },
+    "modifiers": []
+  }
+}

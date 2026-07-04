@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "root": {
+    "type": "brew",
+    "payload": {
+      "name": "firefox",
+      "pkg_type": "cask"
+    },
+    "modifiers": [
+      {"kind": "pre_install", "token": "cb:1"},
+      {"kind": "post_install", "token": "cb:2"}
+    ]
+  }
+}

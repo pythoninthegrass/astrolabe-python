@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "root": {
+    "type": "launch_daemon",
+    "payload": {
+      "label": "com.example.daemon",
+      "program": "/usr/local/bin/mydaemon"
+    },
+    "modifiers": [
+      {"kind": "run_at_load"},
+      {"kind": "keep_alive"},
+      {"kind": "standard_out_path", "value": "/var/log/mydaemon.log"}
+    ]
+  }
+}

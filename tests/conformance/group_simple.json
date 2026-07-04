@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "root": {
+    "type": "group",
+    "payload": {
+      "children": [
+        {
+          "type": "pkg",
+          "payload": {"source": {"kind": "catalog", "id": "command_line_tools"}},
+          "modifiers": []
+        },
+        {
+          "type": "pkg",
+          "payload": {"source": {"kind": "catalog", "id": "homebrew"}},
+          "modifiers": []
+        },
+        {
+          "type": "brew",
+          "payload": {"name": "wget", "pkg_type": "formula"},
+          "modifiers": []
+        }
+      ]
+    },
+    "modifiers": []
+  }
+}

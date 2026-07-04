@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "root": {
+    "type": "brew",
+    "payload": {
+      "name": "wget",
+      "pkg_type": "formula"
+    },
+    "modifiers": []
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "root": {
+    "type": "launch_agent",
+    "payload": {
+      "label": "com.example.myagent",
+      "program": "/usr/local/bin/myagent"
+    },
+    "modifiers": [
+      {"kind": "run_at_load"},
+      {"kind": "keep_alive"},
+      {"kind": "activate"},
+      {"kind": "environment_variables", "value": {"MODE": "managed"}}
+    ]
+  }
+}

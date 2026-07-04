@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "root": {
+    "type": "sys",
+    "payload": {
+      "setting": {
+        "kind": "hostname",
+        "value": "dev-mac"
+      }
+    },
+    "modifiers": []
+  }
+}

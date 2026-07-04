@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "root": {
+    "type": "pkg",
+    "payload": {
+      "source": {
+        "kind": "github",
+        "repo": "org/internal-tool",
+        "version": {
+          "kind": "tag",
+          "value": "v1.2.3"
+        }
+      },
+      "allow_untrusted": false
+    },
+    "modifiers": []
+  }
+}

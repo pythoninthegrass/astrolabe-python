@@ -12,6 +12,7 @@ source = { virtual = "." }
 
 [package.optional-dependencies]
 dev = [
+    { name = "jsonschema" },
     { name = "pyclean" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -28,15 +29,11 @@ test = [
     { name = "pytest-xdist" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "jsonschema" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "coverage", marker = "extra == 'test'", specifier = ">=7.6.1,<8.0.0" },
     { name = "hypothesis", extras = ["cli"], marker = "extra == 'test'", specifier = ">=6.112.1,<7.0.0" },
+    { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.26.0" },
     { name = "pyclean", marker = "extra == 'dev'", specifier = ">=3.0.0,<4.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4,<9.0.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.3,<9.0.0" },
@@ -49,9 +46,6 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.5" },
 ]
 provides-extras = ["dev", "test"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "jsonschema", specifier = ">=4.26.0" }]
 
 [[package]]
 name = "attrs"
