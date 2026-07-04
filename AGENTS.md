@@ -10,6 +10,7 @@ Always use Context7 MCP when I need library/API documentation, code generation, 
 
 - astral-sh/ruff
 - astral-sh/uv
+- photon-hq/astrolabe
 - jdx/mise
 - mrlesk/backlog.md
 - websites/taskfile_dev
